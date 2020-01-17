@@ -68,7 +68,7 @@ model.compile(loss="mean_absolute_percentage_error", optimizer=adam,metrics=["ma
 #other stops training if model begins to overfit
 model.summary()
 tensorboard = TensorBoard(log_dir = 'D:\\scripts\\ML_Attempts\\logs\\Mixed_Data\\mixed_data_{}'.format(num))
-early_stop= EarlyStopping(monitor = 'val_loss', patience = 3,restore_best_weights=True)
+early_stop= EarlyStopping(monitor = 'val_loss', patience = 4,restore_best_weights=True)
 
 #train model using data generator in order to conserve memory
 mixed = model.fit_generator(generator = pd.data_generator(folder,'train',25),
@@ -101,9 +101,9 @@ csv_data = [num,
             mixed.history['val_loss'][-1],
             pd.conv(mixed.history['mean_absolute_error'][-1]),
             pd.conv(mixed.history['val_mean_absolute_error'][-1]),
-            percent_from_std_dev]
+            mixed.history['val_coeff_determination'][-1]]
 
-dc.write_data(csv_data,"D:\scripts\ML_Attempts\CSV_Files\Mixed_Data.csv")
+dc.write_data(csv_data,"D:\scripts\ML_Attempts\CSV_Files\Mixed_Data_r2.csv")
 
 #this data will be plotted and the graphs will be saved
 # dc.plot_data(num,
@@ -115,13 +115,13 @@ dc.write_data(csv_data,"D:\scripts\ML_Attempts\CSV_Files\Mixed_Data.csv")
 
 #predict data and generate residual plot
 x_data,true_speeds = pd.one_batch(folder,1000)
-print(true_speeds)
+print(conv(np.unique(true_speeds)))
+print(str(len(np.unique(true_speeds))))
 pred_speeds = model.predict(x_data)
 pred_speeds_conv = [pd.conv(speed) for speed in pred_speeds] 
-print(pred_speeds_conv)
 pred_speeds_conv = np.unique(pred_speeds_conv)
 print(pred_speeds_conv)
 print(len(pred_speeds_conv))
-dc.residual_plot(num,true_speeds,pred_speeds_conv)
+# dc.residual_plot(num,true_speeds,pred_speeds_conv)
 
 

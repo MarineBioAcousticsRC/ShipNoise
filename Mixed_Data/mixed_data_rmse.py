@@ -67,14 +67,14 @@ comb_output = (Dense(1,activation='linear', kernel_regularizer=regularizers.l1_l
 # input and images on the CNN input, outputting a single value 
 model = Model(inputs=[mlp.input, cnn.input], outputs=comb_output)
 adam =  optimizers.Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
-model.compile(loss='mae', optimizer=adam,metrics=[conv_mae,RMSE,coeff_determination])
+model.compile(loss='mse', optimizer=adam,metrics=[conv_mae,RMSE,coeff_determination])
 
 #-----------------------------------------TRAINING---------------------------------------------------------
 #create callbacks one is to display realtime plots on tensorboard
 #other stops training if model begins to overfit
 model.summary()
 tensorboard = TensorBoard(log_dir = 'D:\\scripts\\ML_Attempts\\logs\\Mixed_Data\\mixed_data_{}'.format(num))
-early_stop= EarlyStopping(monitor = 'val_loss', patience = 3,restore_best_weights=True)
+early_stop= EarlyStopping(monitor = 'val_loss', patience = 4,restore_best_weights=True)
 
 #train model using data generator in order to conserve memory
 mixed = model.fit_generator(generator = pd.data_generator(folder,'train',25),
@@ -108,8 +108,8 @@ csv_data = [num,
             early_stop.stopped_epoch,
             mixed.history['conv_mae'][min_in],
             mixed.history['val_conv_mae'][min_in],
-            mixed.history['RMSE'][min_in],
-            mixed.history['val_RMSE'][min_in],
+            mixed.history['loss'][min_in],
+            mixed.history['val_loss'][min_in],
             mixed.history['val_coeff_determination'][min_in]]
 
 dc.write_data(csv_data,"D:\scripts\ML_Attempts\CSV_Files\Mixed_Data_r2.csv")

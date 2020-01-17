@@ -77,7 +77,7 @@ mixed = model.fit_generator(generator = pd.data_generator(folder,'train',25),
                     callbacks=[tensorboard,early_stop])
 
 #save this attempts weights after training                    
-model.save_weights('D:\\scripts\\ML_Attempts\\Weights\\Mixed_Data\\attempt_{}.h5'.format(num))
+model.save_weights('D:\\scripts\\ML_Attempts\\Weights\\Mixed_Data_Vector\\attempt_{}.h5'.format(num))
 
 #--------------------------------------DATA COLLECTION--------------------------------------------------------------------------
 
@@ -98,7 +98,7 @@ csv_data = [num,
             mixed.history['val_mean_absolute_error'][-1]*conv,
             percent_from_std_dev]
 
-dc.write_data(csv_data,"D:\scripts\ML_Attempts\CSV_Files\Mixed_Data.csv")
+dc.write_data(csv_data,"D:\scripts\ML_Attempts\CSV_Files\Mixed_Data_Vector.csv")
 
 #this data will be plotted and the graphs will be saved
 dc.plot_data(num,

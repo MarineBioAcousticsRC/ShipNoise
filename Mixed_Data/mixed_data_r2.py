@@ -24,12 +24,17 @@ def coeff_determination(y_true, y_pred):
     SS_tot = K.sum(K.square( y_true - K.mean(y_true) ) ) 
     return ( 1 - SS_res/(SS_tot + K.epsilon()) )*-1
 
+def RMSE(y_true, y_pred): #Root Mean Squared Error
+    return K.sqrt(K.mean(K.square(y_pred - y_true)))
+
+def conv_mae(y_true, y_pred):
+    return K.mean(abs(pd.conv(y_pred) - pd.conv(y_true)))
 
 #Command to start TensorBoard:
 #tensorboard --logdir=D:\scripts\ML_Attempts\logs\Mixed_Data --host localhost --port 8088
 
 #NUM ATTEMPT:    
-num = 1001
+num = dc.get_num()
 
 #------------------------------------SETUP-------------------------------------------------------------
 #set up the tensorflow backend in order to use gpu 
@@ -61,7 +66,7 @@ comb_output = (Dense(1,activation='linear', kernel_regularizer=regularizers.l1_l
 # input and images on the CNN input, outputting a single value 
 model = Model(inputs=[mlp.input, cnn.input], outputs=comb_output)
 adam =  optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
-model.compile(loss=coeff_determination, optimizer=adam,metrics=["mean_absolute_percentage_error",'mae'])
+model.compile(loss=coeff_determination, optimizer=adam,metrics=[RMSE,'mae',conv_mae])
 
 #-----------------------------------------TRAINING---------------------------------------------------------
 #create callbacks one is to display realtime plots on tensorboard
@@ -97,13 +102,13 @@ feat_array = pd.get_feats()
 csv_data = [num,
             feat_array,
             early_stop.stopped_epoch,
-            mixed.history['mean_absolute_percentage_error'][-1],
-            mixed.history['val_mean_absolute_percentage_error'][-1],
             pd.conv(mixed.history['mean_absolute_error'][-1]),
             pd.conv(mixed.history['val_mean_absolute_error'][-1]),
-            percent_from_std_dev]
+            pd.conv(mixed.history['RMSE'][-1]),
+            pd.conv(mixed.history['val_RMSE'][-1]),
+            mixed.history['val_loss'][-1]*-1]
 
-dc.write_data(csv_data,"D:\scripts\ML_Attempts\CSV_Files\Mixed_Data.csv")
+dc.write_data(csv_data,"D:\scripts\ML_Attempts\CSV_Files\Mixed_Data_r2.csv")
 
 #this data will be plotted and the graphs will be saved
 # dc.plot_data(num,
@@ -114,12 +119,12 @@ dc.write_data(csv_data,"D:\scripts\ML_Attempts\CSV_Files\Mixed_Data.csv")
             # np.asarray(mixed.history['val_mean_absolute_error'])*conv)
 
 #predict data and generate residual plot
-x_data,true_speeds = pd.one_batch(folder,1000)
+x_data,true_speeds = pd.one_batch(folder,100)
 pred_speeds = model.predict(x_data)
 pred_speeds_conv = [pd.conv(speed) for speed in pred_speeds] 
 pred_speeds_conv = np.unique(pred_speeds_conv)
+print(pred_speeds)
 print(pred_speeds_conv)
-print(len(pred_speeds_conv))
 dc.residual_plot(num,true_speeds,pred_speeds_conv)
 
 
