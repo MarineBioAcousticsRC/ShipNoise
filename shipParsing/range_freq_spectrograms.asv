@@ -1,12 +1,9 @@
 clearvars
 
-% addpath('E:\Code\SPICE-box\SPICE-Detector\io')% I think I moved all
-% functions to the shipParsing directory.
-% addpath('E:\Code\SPICE-box\SPICE-Detector\funs')
+addpath('E:\Code\SPICE-box\SPICE-Detector\io')
+addpath('E:\Code\SPICE-box\SPICE-Detector\funs')
 tfDir = 'E:\TFs'; % folder containing transfer functions
-outDir = 'J:\ShippingCINMS_data'; % where the files will save. I didn't replicate
-% the folder structure, not sure what makes sense for you but happy to
-% change as needed.
+outDir = 'J:\ShippingCINMS_data';
 folderTag = 'COP';
 mainDir = fullfile(outDir,folderTag);
 dirList = dir(fullfile(mainDir,'2*'));
@@ -51,10 +48,7 @@ for iDir = 1:length(dirList)
             continue
         end
         
-        hdr = io_readWavHeader(soundFile,p.DateRegExp);% this just reads the 
-        % wav file sample rate, other basic info, and interprets
-        % the start time from the file name. You probably have a python
-        % script that would do this.
+        hdr = io_readWavHeader(soundFile,p.DateRegExp);
         if sum(hdr.start.dnum>=badDateRanges(:,1) & hdr.start.dnum<=badDateRanges(:,2))
             disp('Event falls within bad date range. Skipping.\n')
             continue
@@ -63,7 +57,7 @@ for iDir = 1:length(dirList)
             0,(hdr.end.dnum-hdr.start.dnum)*24*60*60,...
             'Units','s','Normalize','unscaled');
         
-        % get info from text file to be able to calculate range.
+        % get associated info from text file
         textData = importdata(txtFile);
         
         [siteName,~] = regexp(textData.textdata{1,1},'HARPSite=(\w*)','tokens','match');
@@ -191,22 +185,18 @@ for iDir = 1:length(dirList)
             figure(1);clf
             subplot(1,2,1)
             imagesc(finalDistSpec_floored);set(gca,'ydir','normal');colormap(jet);colorbar
-            xtickLocs = get(gca,'xtick');
-            set(gca,'XTickLabel',myDists(xtickLocs)/1000);
-            xlabel('Range (km)')
-            ylabel('Frequency (Hz)')
+            xtickLocs = get(gca,'xtick')
+            set(gca,'XTickLabel',myDists(xtickLocs));
             title('Range-Frequency')
             subplot(1,2,2)
             spectrogram(wavData,1000,0,1000,hdr.fs,'psd','yaxis'); % sanity check to compare time freq vs range freq.
             colormap(jet);
-            ylim([minFreq,maxFreq]./1000)
-            title('Time-Frequency (noTF)')
+            title('Time-Frequency')
         end
         [~,nameStem,~] = fileparts(soundFile);
         outFileName = [nameStem,'rangeFreq.mat'];
         freqHz = fKeep;
-        % output file in netcdf format
-        save(fullfile(outDir,outFileName),'freqHz','finalDistSpec','finalDistSpec_floored','myDists','-v7.3')
+        save(fullfile(outDir,outFileName),'freqHz','finalDistSpec','finalDistSpec_floored','-v7.3')
     end
 end
 
