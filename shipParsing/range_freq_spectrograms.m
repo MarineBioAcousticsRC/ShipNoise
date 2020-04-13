@@ -1,6 +1,6 @@
 clearvars
 
-% addpath('E:\Code\SPICE-box\SPICE-Detector\io')% I think I moved all
+addpath('E:\Code\SPICE-box\SPICE-Detector\io')% I think I moved all
 % functions to the shipParsing directory.
 % addpath('E:\Code\SPICE-box\SPICE-Detector\funs')
 tfDir = 'E:\TFs'; % folder containing transfer functions
@@ -30,8 +30,8 @@ maxFreq = 3000;% inHz
 % bands of no data, this can be adjusted to fix that. For instance, maybe
 % vessels don't come closer than 4.5 km, so you're always getting empty
 % values for close ranges. In that case, increase 4 to 4.5.
-myDistsApproach = (6:-.01:4)*1000; % ends up being in meters
-myDistsDepart = (4:.01:6)*1000;
+myDistsApproach = (5.8:-.01:4.2)*1000; % ends up being in meters
+myDistsDepart = (4.2:.01:5.8)*1000;
 myDists = [myDistsApproach,myDistsDepart];
 for iDir = 1:length(dirList)
     
@@ -191,22 +191,27 @@ for iDir = 1:length(dirList)
             figure(1);clf
             subplot(1,2,1)
             imagesc(finalDistSpec_floored);set(gca,'ydir','normal');colormap(jet);colorbar
-            xtickLocs = get(gca,'xtick');
-            set(gca,'XTickLabel',myDists(xtickLocs)/1000);
+            roundLabels = find(mod(myDists,500)==0);
+            xtickLocs = set(gca,'xtick',roundLabels);
+            set(gca,'XTickLabel',myDists(roundLabels)/1000);
             xlabel('Range (km)')
             ylabel('Frequency (Hz)')
             title('Range-Frequency')
+            caxis(gca,[40,100])
             subplot(1,2,2)
             spectrogram(wavData,1000,0,1000,hdr.fs,'psd','yaxis'); % sanity check to compare time freq vs range freq.
             colormap(jet);
             ylim([minFreq,maxFreq]./1000)
+            caxis(gca,[-30,25])
             title('Time-Frequency (noTF)')
+            text(-.65,1.05,0,datestr(hdr.start.dnum),'units','normalized','FontSize',16)
+            pause
         end
         [~,nameStem,~] = fileparts(soundFile);
-        outFileName = [nameStem,'rangeFreq.mat'];
+        outFileName = [nameStem,'_rangeFreq.mat'];
         freqHz = fKeep;
         % output file in netcdf format
-        save(fullfile(outDir,outFileName),'freqHz','finalDistSpec','finalDistSpec_floored','myDists','-v7.3')
+        save(fullfile(subDir,outFileName),'freqHz','finalDistSpec','finalDistSpec_floored','myDists','-v7.3')
     end
 end
 
