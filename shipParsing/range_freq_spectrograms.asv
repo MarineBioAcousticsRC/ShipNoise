@@ -214,7 +214,7 @@ for iDir = 1:length(dirList)
             roundLabels = find(mod(myDists,500)==0);
             xtickLocs = set(gca,'xtick',roundLabels);
             set(gca,'XTickLabel',myDists(roundLabels)/1000);
-            set(gca,'YTickLabel',fKeep(get(gca,'yTick'))/1000)
+            set(gca,'YTickLabel',fKeep(get(gca,'yTick')))
             xlabel('Range (km)')
             ylabel('Frequency (kHz)')
             title('Range-Frequency')
@@ -226,18 +226,18 @@ for iDir = 1:length(dirList)
             ylim([minFreq,maxFreq]./1000)
             caxis(gca,[-30,25])
             title('Time-Frequency (noTF)')
+            text(-.65,1.05,0,datestr(hdr.start.dnum),'units','normalized','FontSize',16)
             
             subplot(1,3,3)
-            plot(timeSteps,range1/1000,'b','linewidth',2);
+            plot(timeSteps,range1/1000,'b''linewidth',2);
             hold on;
-            plot(timesToSample,myDistsApproach/1000,'.g')
-            plot(timesToSampleD,myDistsDepart/1000,'.r')
+            plot(timesToSample,myDistsApproach/1000,'*')
+            plot(timesToSampleD,myDistsDepart/1000,'*')
             plot([hdr.end.dnum,hdr.end.dnum],[0,20],'--k')
             plot([hdr.start.dnum,hdr.start.dnum],[0,20],'--k')
-            datetick('keeplimits')
+            datetick
             xlabel('Time')
             ylabel('Horizontal Range (km)')
-            title(sprintf('Transit: %s',datestr(hdr.start.dnum)))
             1;         
         end
         [~,nameStem,~] = fileparts(soundFile);
