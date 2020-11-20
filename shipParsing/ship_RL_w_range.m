@@ -3,7 +3,7 @@ clearvars
 addpath('E:\Code\SPICE-box\SPICE-Detector\io')
 addpath('E:\Code\SPICE-box\SPICE-Detector\funs')
 tfDir = 'E:\TFs';
-outDir = 'F:\ShippingCINMS_data';
+outDir = 'D:\ShippingCINMS_data';
 folderTag = 'COP';
 mainDir = fullfile(outDir,folderTag);
 dirList = dir(fullfile(mainDir,'2*'));
@@ -13,7 +13,7 @@ shipTypeAll = {};
 IMOAll = [];
 shipSizeAll = [];
 draughtAll = [];
-tfList = importdata('F:\ShippingCINMS_data\CINMS_TFs.csv');
+tfList = importdata('D:\ShippingCINMS_data\CINMS_TFs.csv');
 tic
 speedAtRMSAll = [];
 rangeAtRMSAll = [];
@@ -21,7 +21,7 @@ rmsEAll = [];
 makeImages = 1
 dataStore = struct;
 iC = 1;
-for iDir = 15:length(dirList)
+for iDir = 1:length(dirList)
     subDir = fullfile(dirList(iDir).folder,dirList(iDir).name);
     fList = dir(fullfile(subDir,'*.wav'));
     nFiles = size(fList,1);
@@ -52,13 +52,13 @@ for iDir = 15:length(dirList)
             continue
         end
         
-        hdr = io_readWavHeader(soundFile,p.DateRegExp);
-        wavData = io_readWav(soundFile,hdr,...
-            1,(hdr.Chunks{2}.nSamples), 'Normalize','unscaled');
-        if makeImages
-            
-            % wavData1 = gpuArray(wavData);
-        end
+%         hdr = io_readWavHeader(soundFile,p.DateRegExp);
+%         wavData = io_readWav(soundFile,hdr,...
+%             1,(hdr.Chunks{2}.nSamples), 'Normalize','unscaled');
+%         if makeImages
+%             
+%             % wavData1 = gpuArray(wavData);
+%         end
         
         % get associated info from text file
         textData = importdata(txtFile);
@@ -119,13 +119,13 @@ for iDir = 15:length(dirList)
         end
         
         
-        [specMat,fOrig,t] = makeSpectrogram(wavData);
-        [~, uppc] = fn_tfMap(fullfile(tfFile.folder,tfFile.name),fOrig);
-        if isempty(uppc)
-            error('missing tf file')
-        end
-        specMat = specMat+repmat(uppc,1,size(specMat,2));
-        % logvq = F({logxq(:,:),yq});
+        %[specMat,fOrig,t] = makeSpectrogram(wavData);
+%         [~, uppc] = fn_tfMap(fullfile(tfFile.folder,tfFile.name),fOrig);
+%         if isempty(uppc)
+%             error('missing tf file')
+%         end
+%         specMat = specMat+repmat(uppc,1,size(specMat,2));
+%         % logvq = F({logxq(:,:),yq});
         % vq = F({xq,yq});
         % saveName = strrep(soundFile,'.wav','_spectrogram.mat');
         
@@ -142,27 +142,27 @@ for iDir = 15:length(dirList)
         dataStore(iC).MMSI = MMSI;
         dataStore(iC).HarpSite = siteName;
         dataStore(iC).TFFile = tfFile;
-
-        [fB,fA] = butter(5,[20,1000]/(10000/2),'bandpass');
-        filteredData = filtfilt(fB,fA,wavData);%[],2);
         
-       %if strcmp(shipType,'Tanker')
-         [speedAtRMS,rangeAtRMS,rmsE,shipRange,timeAtRange,startTime] = test_rangeVsRL(filteredData,textData,hdr,transitDateTime);
-         [C,I]=unique(timeAtRange);
-         test1 = interp1(timeAtRange(I),shipRange(I),startTime+(t/(60*24*60))','pchip');
-         speedAtRMSAll = [speedAtRMSAll;speedAtRMS];
-            rangeAtRMSAll = [rangeAtRMSAll;rangeAtRMS];
-             rmsEAll = [rmsEAll;rmsE'];
-             
-             plot_spectralmean(t, textData,hdr,specMat,fOrig)
-      %  end
-        passageData = dataStore(iC);
-        if 0%makeImages
-%             save(saveName, 'myPassageLog10','specMatTruncHF','myPassage','passageData','f',...
-%                 'saveName','soundFile','txtFile','draught','IMO','shipType','fLog10',...
-%                 'CPADist','transitDateTime','meanSOG','shipSize','MMSI',...
-%                 'siteName','tfFile','-v7.3');
-        end
+        %         [fB,fA] = butter(5,[20,1000]/(10000/2),'bandpass');
+        %         filteredData = filtfilt(fB,fA,wavData);%[],2);
+        %
+        %        %if strcmp(shipType,'Tanker')
+        %          [speedAtRMS,rangeAtRMS,rmsE,shipRange,timeAtRange,startTime] = test_rangeVsRL(filteredData,textData,hdr,transitDateTime);
+        %          [C,I]=unique(timeAtRange);
+        %          test1 = interp1(timeAtRange(I),shipRange(I),startTime+(t/(60*24*60))','pchip');
+        %          speedAtRMSAll = [speedAtRMSAll;speedAtRMS];
+        %             rangeAtRMSAll = [rangeAtRMSAll;rangeAtRMS];
+        %              rmsEAll = [rmsEAll;rmsE'];
+        %
+        %              plot_spectralmean(t, textData,hdr,specMat,fOrig)
+        %       %  end
+        passageData{iDir} = dataStore;
+%         if 0%makeImages
+%             %             save(saveName, 'myPassageLog10','specMatTruncHF','myPassage','passageData','f',...
+%             %                 'saveName','soundFile','txtFile','draught','IMO','shipType','fLog10',...
+%             %                 'CPADist','transitDateTime','meanSOG','shipSize','MMSI',...
+%             %                 'siteName','tfFile','-v7.3');
+%         end
         iC = iC+1;
         iR = iR+1;
     end
@@ -181,9 +181,9 @@ for iDir = 15:length(dirList)
     %     shipSizeAll = [shipSizeAll;shipSize];
     %     draughtAll = [draughtAll;draught];
     if makeImages
-%         subSetData = dataStore(iCStart:iC-1);
-%         save(fullfile(outDir,[folderTag,'_monthStack_',dirList(iDir).name]),...
-%             'imageStack','subSetData','-v7.3')
+        %         subSetData = dataStore(iCStart:iC-1);
+        %         save(fullfile(outDir,[folderTag,'_monthStack_',dirList(iDir).name]),...
+        %             'imageStack','subSetData','-v7.3')
     end
     fprintf('done with folder %s',subDir)
 end

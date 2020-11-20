@@ -4,9 +4,7 @@ clearvars
 % functions to the shipParsing directory.
 % addpath('E:\Code\SPICE-box\SPICE-Detector\funs')
 tfDir = 'E:\Code\ShipNoise\shipParsing\TFs'; % folder containing transfer functions
-outDir = 'D:\ShippingCINMS_data'; % where the files will save. I didn't replicate
-% the folder structure, not sure what makes sense for you but happy to
-% change as needed.
+outDir = 'D:\ShippingCINMS_data'; % where the files will save. 
 folderTag = 'COP';
 mainDir = fullfile(outDir,folderTag);
 dirList = dir(fullfile(mainDir,'2*'));
@@ -25,17 +23,15 @@ badDateRanges = [2018-02-16,2018-07-11;
 % Frequency limits used to prune the spectrograms.
 minFreq = 10;% in Hz
 maxFreq = 3000;% inHz
-dataLength = 10000; % amount of data to grab in samples for each range step.
-nfft = 1000; % Bin size = fs/nfft = 10000/10
 
 % Vector of distances to sample at. If you have too many passages with
 % bands of no data, this can be adjusted to fix that. For instance, maybe
 % vessels don't come closer than 4.5 km, so you're always getting empty
 % values for close ranges. In that case, increase 4 to 4.5.
-myDistsApproach = (5.8:-.02:4.2)*1000; % ends up being in meters
-myDistsDepart = (4.2:.02:5.8)*1000;
+myDistsApproach = (6:-.01:4)*1000; % ends up being in meters
+myDistsDepart = (4:.01:6)*1000;
 myDists = [myDistsApproach,myDistsDepart];
-for iDir = 4:length(dirList)
+for iDir = 2:length(dirList)
     
     subDir = fullfile(dirList(iDir).folder,dirList(iDir).name);
     fList = dir(fullfile(subDir,'*.wav'));
@@ -43,7 +39,7 @@ for iDir = 4:length(dirList)
     
     
     p.DateRegExp = '_(\d{6})_(\d{6})';
-    for iFile = 1:nFiles
+    for iFile = 10:nFiles
         soundFile = fullfile(fList(iFile).folder,fList(iFile).name);
         % check if text file exists
         txtFile = strrep(soundFile,'.wav','.txt');
@@ -68,10 +64,6 @@ for iDir = 4:length(dirList)
         % get info from text file to be able to calculate range.
         textData = importdata(txtFile);
         
-        if ~isfield(textData,'textdata')
-            warning('No trackline data found, skipping.')
-            continue
-        end
         [siteName,~] = regexp(textData.textdata{1,1},'HARPSite=(\w*)','tokens','match');
         siteName = siteName{1};
         
@@ -107,9 +99,9 @@ for iDir = 4:length(dirList)
         tfIdx = find(~cellfun(@isempty,strfind(tfList.textdata(:,1),siteName)));
         tfNum = tfList.data(tfIdx-1);
         tfFolder = dir(fullfile(tfDir,[num2str(tfNum),'*']));
-        % tfFile = dir(fullfile(tfFolder.folder,tfFolder.name,'*.tf'));
+        %tfFile = dir(fullfile(tfFolder.folder,tfFolder.name,'*.tf'));
         tfFile = dir(fullfile(tfFolder.folder,tfFolder.name));
-
+ 
         if isempty(tfFile)
             error('missing tf file')
         end
@@ -121,10 +113,6 @@ for iDir = 4:length(dirList)
         %
         [xRange,yRange] = latlon2xy(HARPLat,HARPLon,textData.data(:,1),textData.data(:,2));
         range1  = sqrt(xRange.^2+yRange.^2);
-        [timeSteps,ia,ic] = unique(timeSteps,'stable');
-        range1 = range1(ia);
-        interpedTime = min(timeSteps):(1/(24*60)):max(timeSteps);
-        interpedRange = interp1(timeSteps,range1,interpedTime);
         %         figure(2);clf
         %         plot(timeSteps,abs(range1/1000),'*')
         %         hold on
@@ -136,16 +124,12 @@ for iDir = 4:length(dirList)
         
         % get times from textData.textdata
         % approach
-        [~,cpaIdx] = min(abs(interpedTime-CPATime));
-        [uRange1,iA,~] = unique(interpedRange(1:cpaIdx),'stable');
-        if length(uRange1)<=2
-            warning('Not enough audio data')
-            continue
-        end
-        timeStepsTemp = interpedTime(1:cpaIdx);
-        uTimeSteps = timeStepsTemp(iA);
-        timesToSample = interp1(uRange1,uTimeSteps,myDistsApproach);        
-        distSpecApproach = nan(length(myDistsApproach),(nfft/2)+1);
+        [~,cpaIdx] = min(abs(timeSteps-CPATime));
+        [uRange1,ia,ic] = unique(range1(1:cpaIdx),'stable');
+        uTimeStepsTemp = timeSteps(1:cpaIdx);
+        uTimeSteps = uTimeStepsTemp(ia);
+        timesToSample = interp1(uRange1,uTimeSteps,myDistsApproach);
+        distSpecApproach = nan(length(myDistsApproach),5001);
         myDistSpecImag = [];
         uppc = [];
         for iDist = 1:length(myDistsApproach)
@@ -154,32 +138,29 @@ for iDir = 4:length(dirList)
             if isnan(myTimeIdx) || myTimeIdx<1
                 continue
             end
-            myData = wavData(max(myTimeIdx-(dataLength/2),1):min(myTimeIdx+(dataLength/2)-1,length(wavData)));
-            if length(myData)<dataLength
-                myData = [myData;zeros(dataLength-length(myData),1)];
+            myData = wavData(max(myTimeIdx-5000,1):min(myTimeIdx+5000-1,length(wavData)));
+            if length(myData)<10000
+                myData = [myData;zeros(10000-length(myData),1)];
             end
-            [~,f,t,psd] = spectrogram(myData,hanning(nfft),0,nfft,hdr.fs,'psd');
+            [~,f,t,psd] = spectrogram(myData,hanning(10000),0,10000,hdr.fs,'psd');
             if isempty(uppc)&& ~isempty(f)
                 [~, uppc] = fn_tfMap(fullfile(tfFile.folder,tfFile.name),f);
                 fKeep = f;
             end
-            sdBApproach = mean(10*log10(psd),2);
+            sdBApproach = 10*log10(psd);
             if ~isempty(sdBApproach)
                 distSpecApproach(iDist,:) = (sdBApproach+uppc)';
             end
         end
         
         % departure
-        [~,cpaIdx] = min(abs(interpedTime-CPATime));
-        [uRange1,iA,~] = unique(interpedRange(cpaIdx+1:end),'stable');
-        if length(uRange1)<=2
-            warning('Not enough audio data')
-            continue
-        end
-        timeStepsTemp = interpedTime(cpaIdx+1:end);
-        uTimeSteps = timeStepsTemp(iA);
+        [~,cpaIdx] = min(abs(timeSteps-CPATime));
+        [uRange1,ia,ic] = unique(range1(cpaIdx+1:end),'stable');
+        uTimeStepsTemp = timeSteps(cpaIdx+1:end);
+        uTimeSteps = uTimeStepsTemp(ia);
         timesToSampleD = interp1(uRange1,uTimeSteps,myDistsDepart);
-        distSpecDepart= nan(length(myDistsDepart),(nfft/2)+1);
+        % timesToSampleD = interp1(range1(cpaIdx+1:end),timeSteps(cpaIdx+1:end),myDistsDepart);
+        distSpecDepart= nan(length(myDistsDepart),5001);
         uppc = [];
         for iDist = 1:length(myDistsDepart)
             
@@ -187,16 +168,16 @@ for iDir = 4:length(dirList)
             if isnan(myTimeIdx) || myTimeIdx<1
                 continue
             end
-            myData = wavData(max(myTimeIdx-(dataLength/2),1):min(myTimeIdx+(dataLength/2)-1,length(wavData)));
-            if length(myData)<dataLength
-                myData = [myData;zeros(dataLength-length(myData),1)];
+            myData = wavData(max(myTimeIdx-5000,1):min(myTimeIdx+5000-1,length(wavData)));
+            if length(myData)<10000
+                myData = [myData;zeros(10000-length(myData),1)];
             end
-            [~,f,t,psd] = spectrogram(myData,hanning(nfft),0,nfft,hdr.fs,'psd');
+            [~,f,t,psd] = spectrogram(myData,hanning(10000),0,10000,hdr.fs,'psd');
             if isempty(uppc)&& ~isempty(f)
                 [~, uppc] = fn_tfMap(fullfile(tfFile.folder,tfFile.name),f);
                 fKeep = f;
             end
-            sdBDepart = mean(10*log10(psd),2);
+            sdBDepart = 10*log10(psd);
             if ~isempty(sdBDepart)
                 distSpecDepart(iDist,:) = (sdBDepart+uppc)';
             end
@@ -214,44 +195,30 @@ for iDir = 4:length(dirList)
         
         if plotOn
             figure(1);clf
-            subplot(1,3,1)
+            subplot(1,2,1)
             imagesc(finalDistSpec_floored);set(gca,'ydir','normal');colormap(jet);colorbar
             roundLabels = find(mod(myDists,500)==0);
             xtickLocs = set(gca,'xtick',roundLabels);
             set(gca,'XTickLabel',myDists(roundLabels)/1000);
-            set(gca,'YTickLabel',fKeep(get(gca,'yTick'))/1000)
             xlabel('Range (km)')
-            ylabel('Frequency (kHz)')
+            ylabel('Frequency (Hz)')
             title('Range-Frequency')
-            caxis(gca,[40,90])
-            
-            subplot(1,3,2)
-            spectrogram(wavData,hanning(nfft),0,nfft,hdr.fs,'psd','yaxis'); % sanity check to compare time freq vs range freq.
+            caxis(gca,[40,100])
+            subplot(1,2,2)
+            spectrogram(wavData,1000,0,1000,hdr.fs,'psd','yaxis'); % sanity check to compare time freq vs range freq.
             colormap(jet);
             ylim([minFreq,maxFreq]./1000)
             caxis(gca,[-30,25])
             title('Time-Frequency (noTF)')
-            
-            subplot(1,3,3)
-            plot(timeSteps,range1/1000,'b','linewidth',2);
-            hold on;
-            plot(timesToSample,myDistsApproach/1000,'.g')
-            plot(timesToSampleD,myDistsDepart/1000,'.r')
-            plot([hdr.end.dnum,hdr.end.dnum],[0,20],'--k')
-            plot([hdr.start.dnum,hdr.start.dnum],[0,20],'--k')
-            datetick('keeplimits')
-            xlabel('Time')
-            ylabel('Horizontal Range (km)')
-            title(sprintf('Transit: %s',datestr(hdr.start.dnum)))
-            1;         
+            text(-.65,1.05,0,datestr(hdr.start.dnum),'units','normalized','FontSize',16)
+            1;
         end
         [~,nameStem,~] = fileparts(soundFile);
         outFileName = [nameStem,'_rangeFreq.mat'];
         freqHz = fKeep;
         % output file in netcdf format
-        %save(fullfile(subDir,outFileName),'freqHz','finalDistSpec','finalDistSpec_floored','myDists','-v7.3')
+        save(fullfile(subDir,outFileName),'freqHz','finalDistSpec','finalDistSpec_floored','myDists','-v7.3')
     end
-    fprintf('Done with folder %0.0f of %0.0f\n',iDir, length(dirList))
 end
 
 
