@@ -4,23 +4,22 @@ addpath('E:\Code\Triton\Remoras\SPICE-Detector\io')
 % functions to the shipParsing directory.
 % addpath('E:\Code\SPICE-box\SPICE-Detector\funs')
 tfDir = 'L:\Shared drives\MBARC_TF'; % folder containing transfer functions
-outDir = 'F:\ShippingCINMS_data';
-% outDir = 'F:\MarineCadastre\Monthly4500mTrackAboutCPA_KF'; % where the files will save. I didn't replicate
+outDir = 'F:\ShippingCINMS_data\'; % where the files will save. I didn't replicate
 % the folder structure, not sure what makes sense for you but happy to
 % change as needed.
-folderTag = 'SBARC';%'COP';
+folderTag = 'COP';
 mainDir = fullfile(outDir,folderTag);
-dirList = dir(fullfile(mainDir,'201*'));
+dirList = dir(fullfile(mainDir,'2*'));
 plotOn = 1; % 1 for plots, 0 for no plots
-saveDir = 'F:\ShippingCINMS_data\rangeFreqSpectrograms_SBARC_ALL';
+saveDir = 'F:\ShippingCINMS_data\rangeFreqSpec_COP_ALL_corrected';
 if ~isfolder(saveDir)
     mkdir(saveDir)
 end
 % get list of which tfs go with which deployments.
 tfList = importdata('F:\ShippingCINMS_data\CINMS_TFs.csv');
-
+tAdjustDir = 'F:\ShippingCINMS_data\rangeFreqSpectrograms_COP_ALL';
 % load(txtFile)
-% load(wavFile)
+% load(wavFile)'
 % Bad data ranges:
 badDateRanges = [2018-02-16,2018-07-11;
     2015-06-11,	2015-09-01;
@@ -43,7 +42,7 @@ myDistsApproach = (maxRange:-rangeStep:minRange)*1000; % ends up being in meters
 myDistsDepart = (minRange:rangeStep:maxRange)*1000;
 myDists = [myDistsApproach,myDistsDepart];
 goodSet = readtable('F:\ShippingCINMS_data\forKait_data2014_2018_noStrum_1Hour_Cargo.csv', 'Delimiter',',');
-for iDir = 1:length(dirList)
+for iDir = 18:27%:length(dirList)
     
     subDir = fullfile(dirList(iDir).folder,dirList(iDir).name);
     fList = dir(fullfile(subDir,'*.wav'));
@@ -70,6 +69,7 @@ for iDir = 1:length(dirList)
     n = 1;
     usedFList =[];
     for iFile = 1:nFiles
+        
         %         if isempty(find(strcmp(char(fList(IX(iFile)).name),table2cell(goodSet))))
         %             disp('Not in VZ set')
         %             continue
@@ -79,9 +79,18 @@ for iDir = 1:length(dirList)
             continue
         end
         soundFile = fullfile(fList(IX(iFile)).folder,fList(IX(iFile)).name);
+        [~,nameStem,~] = fileparts(soundFile);
+        tCorFileName = fullfile(tAdjustDir,[nameStem,'_timeFreq1000pts_tAdjust.mat']);
+        outFileName = [nameStem,'_timeFreq1000pts.mat'];
+        if ~exist(tCorFileName,'file')
+            disp('No Time Adjustment file')
+            continue
+           
+        end
+        tAdjust = load(tCorFileName); 
         % check if text file exists
-        txtFileWild = strrep(soundFile,'.wav','*.txt');
-        matchingFilesAll = find(strncmp(fList(IX(iFile)).name,cellstr({(fList(:).name)})',16));
+        txtFile = strrep(soundFile,'.wav','.txt');
+        matchingFilesAll = find(strncmp(fList(IX(iFile)).name,cellstr(vertcat(fList(:).name)),16));
         matchingFile = setdiff(matchingFilesAll,IX(iFile));
         
         mergeWave = 0;
@@ -100,12 +109,6 @@ for iDir = 1:length(dirList)
             
         elseif length(matchingFile)>1
             usedFList = [usedFList;matchingFile];
-        end
-        txtFileDir = dir(txtFileWild);
-        if ~isempty(txtFileDir)
-            txtFile = fullfile(txtFileDir.folder, txtFileDir.name);
-        else
-            txtFile = '';
         end
         if ~exist(txtFile,'file')
             if mergeWave && exist(txtFile2,'file')
@@ -174,33 +177,26 @@ for iDir = 1:length(dirList)
             HARPLon = str2double(cell2mat(k2{1,1}));
         end
         CPATime = [];
-        try
-            k4Idx = find(~cellfun(@isempty,strfind((textData.textdata(:,1)),'CPATime'))==1);
-            if ~isempty(k4Idx)
-                [k4,~]= regexp(textData.textdata{k4Idx,1},'CPATime\[UTC\]=(.*)','tokens','match');
-                CPATime = datenum(char(k4{1,1}));
-            end
-        catch
-            disp('CPATime not available')
+        k4Idx = find(~cellfun(@isempty,strfind((textData.textdata(:,1)),'CPATime'))==1);
+        if ~isempty(k4Idx)
+            [k4,~]= regexp(textData.textdata{k4Idx,1},'CPATime\[UTC\]=(.*)','tokens','match');
+            CPATime = datenum(char(k4{1,1}));
         end
+        
         k5Idx = find(~cellfun(@isempty,strfind((textData.textdata(:,1)),'CPADistance'))==1);
         if ~isempty(k5Idx)
             [k5,~]= regexp(textData.textdata{k5Idx,1},'CPADistance\[m\]=(\d*)','tokens','match');
             CPADist = str2num(char(k5{1,1}));
         end
-        try
-            timeSteps = [];
-            k6Idx = find(~cellfun(@isempty,strfind((textData.textdata(:,1)),'UTC'))==1);
-            if ~isempty(k6Idx)
-                timeSteps = datenum(textData.textdata(k6Idx(end)+1:end,1));
-            end
-            k1Idx = find(~cellfun(@isempty,strfind((textData.textdata(:,1)),'ShipType'))==1);
-        catch
-            disp('timesteps not available')
-            continue
+        timeSteps = [];
+        k6Idx = find(~cellfun(@isempty,strfind((textData.textdata(:,1)),'UTC'))==1);
+        if ~isempty(k6Idx)
+            timeSteps = datenum(textData.textdata(k6Idx(end)+1:end,1));
         end
-        
-        
+        if ~isempty(tAdjust)
+            % timeSteps = timeSteps+datenum([0,0,0,0,0,tAdjust.offset_sec_SBminusMC]);
+        end
+        k1Idx = find(~cellfun(@isempty,strfind((textData.textdata(:,1)),'ShipType'))==1);
         shipType = [];
         if ~isempty(k1Idx)
             [k1,~]= regexp(textData.textdata{k1Idx,1},'ShipType=(\w*)','tokens','match');
@@ -228,13 +224,8 @@ for iDir = 1:length(dirList)
         
         draught = [];
         if ~isempty(k4Idx)
-            try
-                [k4,~]= regexp(textData.textdata{k4Idx,1},'Draught\[m\]=(\d*\.\d*)','tokens','match');
-            
-                draught = str2num(char(k4{1,1}));
-            catch
-                draught = NaN;
-            end
+            [k4,~]= regexp(textData.textdata{k4Idx,1},'Draught\[m\]=(\d*\.\d*)','tokens','match');
+            draught = str2num(char(k4{1,1}));
         end
         
         k7Idx = find(~cellfun(@isempty,strfind((textData.textdata(:,1)),'MMSI='))==1);
@@ -279,7 +270,7 @@ for iDir = 1:length(dirList)
         interpedRange = (smooth(interpedRange,30,'rloess')');
         [~,cpaIdx] = min(interpedRange);
         
-        myRange = max(1,(cpaIdx-400)):min(length(interpedRange),(cpaIdx+400));
+        myRange = max(1,(cpaIdx-300)):min(length(interpedRange),(cpaIdx+300));
         
         % figure(2);clf
         % plot(timeSteps,abs(range1/1000),'*')
@@ -329,25 +320,17 @@ for iDir = 1:length(dirList)
             continue
         end
 
-        [~,nameStem,~] = fileparts(soundFile);
+
         %keepTF = [];
         %         keepTF = input('Save passage?  Y/N [Y]:','s');
         %         if  isempty(keepTF) || strcmpi(keepTF,'y')
-        outFileName = [nameStem,'_timeFreq1000pts.mat'];
         % output file in netcdf format
         shipLat = textData.data(:,1);
         shipLon = textData.data(:,2);
-        dateTime = hdr.start.dnum+(t/(60*24*60));
-        bestSet.PSD = myPSD(:,myRange);
-        bestSet.range = interpedRange(myRange);
-        bestSet.time = dateTime(myRange);
-%        if exist(fullfile(saveDir,outFileName),'file')
         save(fullfile(saveDir,outFileName),'f','interpedRange','myPSD',...
             'shipSize','draught','IMO','shipType','CPADist','CPATime',...
             'meanSOG','shipSize','interpedTime','timeSteps',...
-            'shipLat','shipLon','MMSI','HARPLat','HARPLon',...
-            'cpaIdx','myRange','interpedRange',...
-            'dateTime','f','bestSet','-v7.3')
+            'shipLat','shipLon','MMSI','HARPLat','HARPLon','-v7.3')
 %        psdStack(:,:,n) = myPSD(:,myRange);
         
 %         interpedTimeStack(n,:) = t(myRange) ;
@@ -360,13 +343,10 @@ for iDir = 1:length(dirList)
 %         CPATimeStack(n,:) = CPATime;
 %         meanSOGStack(n,:) = meanSOG;
 %         MMSIStack(n,:) =MMSI;
-%         else
-%             disp('not in folder.')
-%         end
         fprintf('Done with file %0.0f of %0.0f\n', iFile, nFiles)
         n = n+1;
-%         saveas(gcf,strrep(fullfile(saveDir,outFileName),'.mat','.fig'))
-%         saveas(gcf,strrep(fullfile(saveDir,outFileName),'.mat','.png'))
+        saveas(gcf,strrep(fullfile(saveDir,outFileName),'.mat','.fig'))
+        saveas(gcf,strrep(fullfile(saveDir,outFileName),'.mat','.png'))
     end
 %     fprintf('Done with folder %0.0f of %0.0f\n', iDir, length(dirList))
 %     save(fullfile(saveDir,[dirList(iDir).name,'_timeFreqStack.mat']),...
