@@ -4,20 +4,21 @@ addpath('E:\Code\Triton\Remoras\SPICE-Detector\io')
 % functions to the shipParsing directory.
 % addpath('E:\Code\SPICE-box\SPICE-Detector\funs')
 tfDir = 'L:\Shared drives\MBARC_TF'; % folder containing transfer functions
-outDir = 'F:\ShippingCINMS_data';
-% outDir = 'F:\MarineCadastre\Monthly4500mTrackAboutCPA_KF'; % where the files will save. I didn't replicate
+tfList = importdata('F:\ShippingCINMS_data\CINMS_TFs.csv');
+% outDir = 'F:\ShippingCINMS_data';
+outDir = 'F:\MarineCadastre\Monthly4500mTrackAboutCPA_KF'; % where the files will save. I didn't replicate
 % the folder structure, not sure what makes sense for you but happy to
 % change as needed.
-folderTag = 'SBARC';%'COP';
+folderTag ='';% 'SBARC';%'COP';
 mainDir = fullfile(outDir,folderTag);
 dirList = dir(fullfile(mainDir,'201*'));
 plotOn = 1; % 1 for plots, 0 for no plots
-saveDir = 'F:\ShippingCINMS_data\rangeFreqSpectrograms_SBARC_ALL';
+saveDir = 'J:\ShippingCINMS_data\timeFreqSpec_SBARC_MCadastre';
 if ~isfolder(saveDir)
     mkdir(saveDir)
 end
 % get list of which tfs go with which deployments.
-tfList = importdata('F:\ShippingCINMS_data\CINMS_TFs.csv');
+
 
 % load(txtFile)
 % load(wavFile)
@@ -190,7 +191,8 @@ for iDir = 1:length(dirList)
         end
         try
             timeSteps = [];
-            k6Idx = find(~cellfun(@isempty,strfind((textData.textdata(:,1)),'UTC'))==1);
+            k6Idx = find(contains(textData.textdata(:,1),'UTC'));
+            k6Idx= k6Idx(end);
             if ~isempty(k6Idx)
                 timeSteps = datenum(textData.textdata(k6Idx(end)+1:end,1));
             end

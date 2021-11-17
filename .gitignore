@@ -1,3 +1,11 @@
 
 shipParsing/passage_data.mat
 shipParsing/range_freq_spectrograms.asv
+*.asv
+*.mat
+*.csv
+*.pyc
+*.png
+*.txt
+events.out*
+*.bin

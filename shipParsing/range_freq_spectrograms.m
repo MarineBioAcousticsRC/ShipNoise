@@ -4,16 +4,16 @@ clearvars
 % functions to the shipParsing directory.
 % addpath('E:\Code\SPICE-box\SPICE-Detector\funs')
 tfDir = 'E:\Code\ShipNoise\shipParsing\TFs'; % folder containing transfer functions
-outDir = 'D:\ShippingCINMS_data'; % where the files will save. I didn't replicate
+outDir = 'F:\ShippingCINMS_data'; % where the files will save. I didn't replicate
 % the folder structure, not sure what makes sense for you but happy to
 % change as needed.
-folderTag = 'COP';
+folderTag = 'SBARC';
 mainDir = fullfile(outDir,folderTag);
 dirList = dir(fullfile(mainDir,'2*'));
 plotOn = 1; % 1 for plots, 0 for no plots
 
 % get list of which tfs go with which deployments.
-tfList = importdata('D:\ShippingCINMS_data\CINMS_TFs.csv');
+tfList = importdata('F:\ShippingCINMS_data\CINMS_TFs.csv');
 
 % load(txtFile)
 % load(wavFile)
@@ -23,10 +23,10 @@ badDateRanges = [2018-02-16,2018-07-11;
     2016-11-09,	2017-02-22];
 
 % Frequency limits used to prune the spectrograms.
-minFreq = 10;% in Hz
-maxFreq = 3000;% inHz
+minFreq = 0;% in Hz
+maxFreq = 500;% inHz
 dataLength = 10000; % amount of data to grab in samples for each range step.
-nfft = 1000; % Bin size = fs/nfft = 10000/10
+nfft = 10000; % Bin size = fs/nfft = 10000/10
 
 % Vector of distances to sample at. If you have too many passages with
 % bands of no data, this can be adjusted to fix that. For instance, maybe
@@ -35,7 +35,7 @@ nfft = 1000; % Bin size = fs/nfft = 10000/10
 myDistsApproach = (5.8:-.02:4.2)*1000; % ends up being in meters
 myDistsDepart = (4.2:.02:5.8)*1000;
 myDists = [myDistsApproach,myDistsDepart];
-for iDir = 4:length(dirList)
+for iDir = 15:length(dirList)
     
     subDir = fullfile(dirList(iDir).folder,dirList(iDir).name);
     fList = dir(fullfile(subDir,'*.wav'));
@@ -219,17 +219,21 @@ for iDir = 4:length(dirList)
             roundLabels = find(mod(myDists,500)==0);
             xtickLocs = set(gca,'xtick',roundLabels);
             set(gca,'XTickLabel',myDists(roundLabels)/1000);
-            set(gca,'YTickLabel',fKeep(get(gca,'yTick'))/1000)
+            %set(gca,'YTickLabel',fKeep(get(gca,'yTick')))
             xlabel('Range (km)')
-            ylabel('Frequency (kHz)')
+            ylabel('Frequency (Hz)')
             title('Range-Frequency')
-            caxis(gca,[40,90])
-            
+            caxis(gca,[50,100])
+            ylim([minFreq,maxFreq])
+
             subplot(1,3,2)
-            spectrogram(wavData,hanning(nfft),0,nfft,hdr.fs,'psd','yaxis'); % sanity check to compare time freq vs range freq.
+            
+            [~,f2,t2,psd2] = spectrogram(wavData,hanning(nfft),0,nfft,hdr.fs,'psd','yaxis'); % sanity check to compare time freq vs range freq.
+            tsSpec = (10*log10(psd2)+uppc);
+            imagesc(tsSpec);set(gca,'ydir','normal');colormap(jet);colorbar
             colormap(jet);
-            ylim([minFreq,maxFreq]./1000)
-            caxis(gca,[-30,25])
+            ylim([minFreq,maxFreq])
+            caxis(gca,[50,100])
             title('Time-Frequency (noTF)')
             
             subplot(1,3,3)
