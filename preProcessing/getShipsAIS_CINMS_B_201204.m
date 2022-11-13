@@ -4,7 +4,7 @@
 clear variables
 
 % set AIS decoded file type
-aisType = 3; % SBARC=1, Shipplotter=2, Marine Cadastre
+aisType = 1; % SBARC=1, Shipplotter=2, Marine Cadastre
 
 % nominal site B location is CINMS_B_30_00
 % ~7.6 km from edge of southbound side of the shipping lane
@@ -33,25 +33,30 @@ switch aisType
         %     'D:\Projects\ShippingCINMS\AIS\SBARC\AIS_SBARC_180718.txt';
         %     };
         
-        idir = 'D:\Projects\ShippingCINMS\AIS\SBARC\';
+        idir = 'F:\ShippingCINMS_data\SBARC';
         aisFiles = ls(fullfile(idir,'AIS_SBARC_*.txt'));
-        odir = 'G:\ShippingCINMS\matFiles';
+        odir = 'F:\ShippingCINMS\matFiles';
+        aisTypeStr = 'SBARC';
     case 2
         %         idir = 'P:\ShippingCINMS\AIS\testCOP\';
         idir = 'P:\ShippingCINMS\AIS\COP\';
         aisFiles = ls(fullfile(idir,'shipplotter*.log'));
         %         odir = 'P:\ShippingCINMS\matFilesTest';
         odir = 'P:\ShippingCINMS\matFilesCOP';
+        aisTypeStr = 'ShipPlotter';
         
     case 3
         % marine cadastre csv format (not geodatabases from 2014 and
         % earlier)
         idir = 'F:\MarineCadastre\CINMSonly';
         aisFiles = ls(fullfile(idir,'AIS*10-11*.csv'));
-        
+        aisTypeStr = 'MARCAD';
+
         odir = 'F:\MarineCadastre\matFilesMarCad';
     otherwise
         disp('unknown decoded AIS type')
+        aisTypeStr = 'Unk';
+
 end
 
 if ~isfolder(odir) % no folder? make it
@@ -78,7 +83,7 @@ for f = 1:NF
         dstampOrig = char(regexp(aisFile,'[0-9]{4}_[0-9]{2}','match'));
         dstamp = {datestr(datenum([str2num(dstampOrig(1:4)),str2num(dstampOrig(6:7)),01]),'yymmdd')};
     end
-    ofn = sprintf('siteB_AIS_%dm_%s.mat',boundd_m,dstamp{1});
+    ofn = sprintf('siteB_AIS_%s_%dm_%s.mat',aisTypeStr,boundd_m,dstamp{1});
     offn = fullfile(odir,ofn);
     
     %     if exist(offn,'file') == 2 % output exists, don't process input

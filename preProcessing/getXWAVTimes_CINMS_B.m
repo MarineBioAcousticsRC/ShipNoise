@@ -5,7 +5,7 @@
 
 [ lffn, ~, ~ ] = dbFindFiles('CINMS*B*df20*.ltsa', 'I:\', 1);
 
-diskLabel = 'CINMS Decimated 2';
+diskLabel = 'CINMS Decimated 3';
 
 exclude = {
     'CINMS_B_30_03';

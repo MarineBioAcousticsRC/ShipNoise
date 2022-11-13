@@ -54,7 +54,7 @@ if plotOn
     set(gca,'xticklabel',(xVecResizekm(get(gca,'xtick'))))
     set(gca,'clim',[60,90])
     colormap(jet)
-    set(gca,'yticklabel',floor(yVecResize(get(gca,'ytick'))))
+    set(gca,'yticklabel',floor(yVecResize(get(gca,'ytick')+1)))
     xlabel('Range (km)')
 %     subplot(1,4,4)
 %     imagesc(flipud(B))

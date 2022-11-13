@@ -13,6 +13,7 @@ idir =  'M:\MarineCadastre\matFilesMarCad';
 matFiles = ls(fullfile(idir,'*2000*.mat'));
 tfDir = 'E:\MBARC_TF'; % folder containing transfer functions
 tfList = importdata('F:\ShippingCINMS_data\CINMS_TFs.csv');
+% E:\Code\Chapter3_2_sourcelevels\CINMS_B_xwavInfo_151216_to_210505.mat
 
 
 % output for passes defined by first/last point within radius
@@ -28,7 +29,6 @@ end
 % let's call radius of interest 6.5 km, gives a passing transit of ~5.5 km (
 % 6 nm ) if ship in northbound lane
 % to limit to northbound lane CPA <= 5 km
-
 
 mincpa_m = 5000; % [m]
 
@@ -227,7 +227,7 @@ for mf = 1:size(matFiles,1)
             end
             
             audiowrite(offn1,int16(data),fs,'BitsPerSample',16);
-            
+            F:\ShippingCINMS_data\SBARC
             
             %%% plot data
             h1 = [];
@@ -343,6 +343,8 @@ for mf = 1:size(matFiles,1)
 %             caxis([ 60 105 ]);
             
         end%
+        
+        
         try
             [sdBRadon,projectionAngles,xResize,yResize] = calc_radon(thisShipTrack,distSpec(:,1:300)',uRange1,f_rng(1:300));
 

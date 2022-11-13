@@ -3,14 +3,14 @@ clearvars
 addpath('E:\Code\Triton\Remoras\SPICE-Detector\io')
 % functions to the shipParsing directory.
 % addpath('E:\Code\SPICE-box\SPICE-Detector\funs')
-tfDir = 'L:\Shared drives\MBARC_TF'; % folder containing transfer functions
-tfList = importdata('F:\ShippingCINMS_data\CINMS_TFs.csv');
+tfDir = 'O:\Shared drives\MBARC_TF'; % folder containing transfer functions
+tfList = importdata('M:\ShippingCINMS_data\CINMS_TFs.csv');
 % outDir = 'F:\ShippingCINMS_data';
-outDir = 'F:\MarineCadastre\Monthly4500mTrackAboutCPA_KF'; % where the files will save. I didn't replicate
+inDir = 'S:\MarineCadastre\Monthly4500mTrackAboutCPA_KF'; % where the files will save. I didn't replicate
 % the folder structure, not sure what makes sense for you but happy to
 % change as needed.
 folderTag ='';% 'SBARC';%'COP';
-mainDir = fullfile(outDir,folderTag);
+mainDir = fullfile(inDir,folderTag);
 dirList = dir(fullfile(mainDir,'201*'));
 plotOn = 1; % 1 for plots, 0 for no plots
 saveDir = 'J:\ShippingCINMS_data\timeFreqSpec_SBARC_MCadastre';
@@ -43,7 +43,7 @@ rangeStep = .02;
 myDistsApproach = (maxRange:-rangeStep:minRange)*1000; % ends up being in meters
 myDistsDepart = (minRange:rangeStep:maxRange)*1000;
 myDists = [myDistsApproach,myDistsDepart];
-goodSet = readtable('F:\ShippingCINMS_data\forKait_data2014_2018_noStrum_1Hour_Cargo.csv', 'Delimiter',',');
+goodSet = readtable('M:\ShippingCINMS_data\forKait_data2014_2018_noStrum_1Hour_Cargo.csv', 'Delimiter',',');
 for iDir = 1:length(dirList)
     
     subDir = fullfile(dirList(iDir).folder,dirList(iDir).name);

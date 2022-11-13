@@ -5,9 +5,10 @@ function [ data ] = getCINMS_B_df20_180821(t0,tn)
 % these include a full pathname so may need to be regenerated if mount
 % points change ( i.e. disk has been disconnected/reconnected )
 %
-xwavTimes = {
-    'E:\Data\ShippingCINMS\CINMS_B_xwavInfo_000113_to_151216.mat';
-    'E:\Data\ShippingCINMS\CINMS_B_xwavInfo_151216_to_180205.mat'};
+%xwavTimes = {
+%     'E:\Data\ShippingCINMS\CINMS_B_xwavInfo_000113_to_151216.mat';
+%     'E:\Data\ShippingCINMS\CINMS_B_xwavInfo_151216_to_180205.mat'};
+xwavTimes = {'E:\Code\Chapter3_2_sourcelevels\CINMS_B_xwavInfo_151216_to_210505.mat'}; %xwav start and end times
 
 mnum2secs = 24*60*60;
 date_fmt = 'mm/dd/yy HH:MM:SS.FFF';
